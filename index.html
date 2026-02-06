@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>AI漫剧素材命名工具 - 2026导演全能版</title>
+    <title>AI漫剧素材命名工具 - 导演纠错增强版</title>
     <style>
         :root { --primary: #6366f1; --success: #4ade80; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #333; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 20px; background: var(--bg); color: var(--text); line-height: 1.6; }
@@ -46,16 +46,16 @@
 <body>
 
 <div class="container">
-    <h2>AI 漫剧素材命名工具 <small style="font-size: 12px; vertical-align: middle; opacity: 0.5;">v2026.2 全能版</small></h2>
+    <h2>AI 漫剧素材命名工具 <small style="font-size: 12px; vertical-align: middle; opacity: 0.5;">v2026.3 修正版</small></h2>
     
     <div class="input-group">
-        <label>统一剧名前缀（自动保存）</label>
+        <label>统一剧名前缀（自动保存上次输入）</label>
         <input type="text" id="globalTitle" placeholder="输入新剧名，如：被恶毒邻居害死后" oninput="saveAndRefresh()">
     </div>
 
     <div id="dropZone" class="drop-area" onclick="selectFolder()">
         <p>📂 拖拽文件夹或视频到这里</p>
-        <p style="font-size: 11px; margin-top: 8px; color: #555;">支持格式：剧名-第X集 描述 时间戳.mp4 / 剧名01.mp4 / 第五集.mp4</p>
+        <p style="font-size: 11px; margin-top: 8px; color: #eab308;">【已修正】自动识别并剔除 2026XXXX 等日期时间戳</p>
     </div>
 
     <div class="file-list-container">
@@ -63,7 +63,7 @@
             <thead>
                 <tr>
                     <th width="35%">原始文件名</th>
-                    <th width="45%">预览（可手动编辑）</th>
+                    <th width="45%">预览（已自动过滤时间戳）</th>
                     <th width="20%" style="text-align: center;">操作</th>
                 </tr>
             </thead>
@@ -82,59 +82,58 @@
 <script>
     let filesData = [];
 
-    // 页面加载时恢复上次的剧名
     window.onload = () => {
         const savedTitle = localStorage.getItem('lastSeriesTitle');
-        if (savedTitle) {
-            document.getElementById('globalTitle').value = savedTitle;
-        }
+        if (savedTitle) document.getElementById('globalTitle').value = savedTitle;
     };
 
-    // 保存剧名并即时刷新预览
     function saveAndRefresh() {
         const title = document.getElementById('globalTitle').value;
         localStorage.setItem('lastSeriesTitle', title);
         refreshAllNames();
     }
 
-    // --- 核心逻辑：智能解析各种乱七八糟的格式 ---
+    // --- 核心修正逻辑：彻底解决时间戳干扰 ---
     function getSmartName(oldName) {
         const prefixInput = document.getElementById('globalTitle').value.trim();
         
-        // 1. 优先匹配：导演专业格式 (剧名-第X集 描述 时间戳)
-        const heavyRegex = /^(.*?)-第([\d一二三四五六七八九十]+)集\s+(.*?)(?=\s*\d{8}_\d{6}|_final_video|\.mp4)/;
-        const heavyMatch = oldName.match(heavyRegex);
+        // 1. 第一步：先把文件名里的时间戳和干扰项通通切掉
+        // 剔除：8位以上连续数字 (如20260206)、带下划线的长数字、以及 final_video 等字样
+        let cleanName = oldName
+            .replace(/\d{8}(_\d{6})?/, '')     // 剔除 20260206 或 20260206_082149
+            .replace(/_final_video/gi, '')     // 剔除 final_video
+            .replace(/\.mp4|\.mov|\.mkv/gi, '') // 暂时去掉后缀方便匹配
+            .trim();
 
-        if (heavyMatch) {
-            const seriesName = heavyMatch[1]; 
-            const epNum = heavyMatch[2];      
-            const desc = heavyMatch[3].trim(); 
-            return `${prefixInput || seriesName} 第${epNum}集 ${desc}.mp4`;
+        // 2. 模式 A：匹配“剧名-第X集 描述”
+        const regexA = /^(.*?)-第([\d一二三四五六七八九十]+)集\s+(.*)/;
+        const matchA = cleanName.match(regexA);
+        if (matchA) {
+            return `${prefixInput || matchA[1]} 第${matchA[2]}集 ${matchA[3].trim()}.mp4`;
         }
 
-        // 2. 兼容匹配：普通格式 (寻找“第X集”或“第X话”)
-        const epMatch = oldName.match(/第([\d一二三四五六七八九十]+)[集话]/);
-        if (epMatch) {
-            const num = epMatch[1];
-            // 尝试提取“第”字前面的内容作为原剧名
-            const namePart = oldName.split(/第[\d一二三四五六七八九十]+[集话]/)[0].replace(/[-_]$/, '').trim();
+        // 3. 模式 B：寻找集数 (限制在1-4位，防止误杀其他长数字)
+        const regexB = /第([\d一二三四五六七八九十]{1,4})[集话]/;
+        const matchB = cleanName.match(regexB);
+        if (matchB) {
+            const num = matchB[1];
+            const namePart = cleanName.split(regexB)[0].replace(/[-_]$/, '').trim();
             return `${prefixInput || namePart || '素材'} 第${num}集.mp4`;
         }
 
-        // 3. 最简匹配：只找数字
-        const pureNumMatch = oldName.match(/(\d+)/);
-        if (pureNumMatch) {
-            const num = pureNumMatch[1].replace(/^0+/, '') || "0";
+        // 4. 模式 C：寻找剩下的纯数字
+        const matchC = cleanName.match(/(\d{1,4})/);
+        if (matchC) {
+            const num = matchC[1].replace(/^0+/, '') || "0";
             return `${prefixInput || '素材'} 第${num}集.mp4`;
         }
 
-        return `${prefixInput || '未知素材'}_${oldName}`;
+        return `${prefixInput || '素材'}_${cleanName}.mp4`;
     }
 
     async function addToFileList(handle) {
         if (handle.kind !== 'file' || !/\.(mp4|mov|mkv|webm|avi)$/i.test(handle.name)) return;
         if (filesData.some(f => f.oldName === handle.name)) return;
-
         filesData.push({
             handle: handle,
             oldName: handle.name,
@@ -146,57 +145,38 @@
     function renderUI() {
         const tbody = document.getElementById('fileList');
         tbody.innerHTML = filesData.map((item, index) => {
-            if (item.isDone) {
-                return `<tr><td colspan="2" class="status-done">✅ 已完成：${item.newName}</td><td style="text-align:center"><button class="op-btn del-btn" onclick="removeFile(${index})">移除记录</button></td></tr>`;
-            }
-            return `
-                <tr>
-                    <td style="color: #666; font-size: 11px; word-break: break-all;">${item.oldName}</td>
-                    <td><input type="text" class="edit-input" value="${item.newName}" oninput="updateManualName(${index}, this.value)"></td>
-                    <td style="text-align: center;">
-                        <button class="op-btn modify-btn" onclick="renameSingle(${index})">修改</button>
-                        <button class="op-btn del-btn" onclick="removeFile(${index})">移除</button>
-                    </td>
-                </tr>
-            `;
+            if (item.isDone) return `<tr><td colspan="2" class="status-done">✅ 已完成：${item.newName}</td><td style="text-align:center"><button class="op-btn del-btn" onclick="removeFile(${index})">移除记录</button></td></tr>`;
+            return `<tr><td style="color: #666; font-size: 11px;">${item.oldName}</td><td><input type="text" class="edit-input" value="${item.newName}" oninput="updateManualName(${index}, this.value)"></td><td style="text-align: center;"><button class="op-btn modify-btn" onclick="renameSingle(${index})">修改</button><button class="op-btn del-btn" onclick="removeFile(${index})">移除</button></td></tr>`;
         }).join('');
-        
         document.getElementById('execBtn').disabled = !filesData.some(f => !f.isDone);
-        document.getElementById('log').innerText = `已加载 ${filesData.length} 个文件`;
+        document.getElementById('log').innerText = `加载成功，准备处理 ${filesData.length} 个文件`;
     }
 
     async function renameSingle(index) {
         const item = filesData[index];
         try {
-            if (await item.handle.queryPermission({mode: 'readwrite'}) !== 'granted') {
-                await item.handle.requestPermission({mode: 'readwrite'});
-            }
+            if (await item.handle.queryPermission({mode: 'readwrite'}) !== 'granted') await item.handle.requestPermission({mode: 'readwrite'});
             await item.handle.move(item.newName);
             item.isDone = true;
             renderUI();
-        } catch (err) {
-            alert("无法修改，请确保文件未被播放器占用且已授权。");
-        }
+        } catch (err) { alert("修改失败，请检查文件是否被占用。"); }
     }
 
     async function runBatchRename() {
         const btn = document.getElementById('execBtn');
-        btn.innerText = "正在处理...";
+        btn.innerText = "处理中...";
         btn.disabled = true;
-
         for (let item of filesData) {
             if (item.isDone) continue;
             try {
-                if (await item.handle.queryPermission({mode: 'readwrite'}) !== 'granted') {
-                    await item.handle.requestPermission({mode: 'readwrite'});
-                }
+                if (await item.handle.queryPermission({mode: 'readwrite'}) !== 'granted') await item.handle.requestPermission({mode: 'readwrite'});
                 await item.handle.move(item.newName);
                 item.isDone = true;
             } catch (e) {}
         }
         renderUI();
         btn.innerText = "确认批量修改";
-        alert("批量重命名完成！");
+        alert("全部重命名完成！");
     }
 
     function updateManualName(index, val) { filesData[index].newName = val; }
