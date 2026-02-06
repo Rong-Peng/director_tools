@@ -2,139 +2,223 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>AI漫剧导演工作站 - 综合版</title>
+    <title>AI漫剧素材命名工具 - 2026导演全能版</title>
     <style>
         :root { --primary: #6366f1; --success: #4ade80; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #333; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 20px; background: var(--bg); color: var(--text); }
-        .container { max-width: 950px; margin: auto; background: var(--card); padding: 30px; border-radius: 16px; border: 1px solid var(--border); }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 20px; background: var(--bg); color: var(--text); line-height: 1.6; }
+        .container { max-width: 1000px; margin: auto; background: var(--card); padding: 30px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
-        /* 选项卡切换样式 */
-        .tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .tab-btn { background: none; border: none; color: #888; padding: 10px 20px; cursor: pointer; font-weight: bold; font-size: 16px; border-radius: 8px; }
-        .tab-btn.active { background: var(--primary); color: white; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        h2 { margin-top: 0; color: #a5b4fc; }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-size: 13px; color: #888; text-transform: uppercase; }
-        input[type="text"] { background: #2d2d2d; border: 1px solid #444; color: white; padding: 12px; width: 100%; border-radius: 8px; box-sizing: border-box; outline: none; }
-        input[type="text"]:focus { border-color: var(--primary); }
+        h2 { margin-top: 0; color: #a5b4fc; text-align: center; letter-spacing: 1px; }
+        .input-group { margin-bottom: 25px; background: #252525; padding: 15px; border-radius: 10px; border: 1px solid #333; }
+        label { display: block; margin-bottom: 8px; font-size: 13px; color: #aaa; text-transform: uppercase; font-weight: bold; }
+        input#globalTitle { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 14px; width: 100%; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.3s; }
+        input#globalTitle:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
 
         .drop-area { border: 2px dashed #444; padding: 40px; text-align: center; border-radius: 12px; background: #1a1a1a; cursor: pointer; margin-bottom: 25px; transition: 0.3s; }
-        .drop-area:hover { border-color: var(--primary); background: #252525; }
+        .drop-area:hover { border-color: var(--primary); background: #222; }
+        .drop-area p { margin: 0; color: #888; }
 
-        .file-list-container { background: #141414; border-radius: 10px; border: 1px solid var(--border); max-height: 400px; overflow-y: auto; }
+        .file-list-container { background: #141414; border-radius: 10px; border: 1px solid var(--border); max-height: 500px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: #252525; padding: 12px; text-align: left; color: #888; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--border); }
-        td { padding: 10px 12px; border-bottom: 1px solid #222; }
+        th { background: #252525; padding: 15px 12px; text-align: left; color: #888; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--border); }
+        td { padding: 12px; border-bottom: 1px solid #222; vertical-align: middle; }
         
-        .edit-input { background: #000; border: 1px solid #444; color: var(--success); padding: 6px 10px; width: 90%; border-radius: 4px; outline: none; }
+        .edit-input { background: #000; border: 1px solid #444; color: var(--success); padding: 8px 12px; width: 95%; border-radius: 6px; outline: none; font-family: monospace; }
+        .edit-input:focus { border-color: var(--success); }
         
-        .action-bar { display: flex; gap: 15px; margin-top: 20px; }
-        .main-btn { padding: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; flex: 1; font-size: 15px; }
+        .op-btn { cursor: pointer; border: none; background: none; font-size: 12px; font-weight: bold; margin: 0 5px; transition: 0.2s; padding: 5px 8px; border-radius: 4px; }
+        .modify-btn { color: var(--success); background: rgba(74, 222, 128, 0.1); }
+        .modify-btn:hover { background: rgba(74, 222, 128, 0.2); }
+        .del-btn { color: #f87171; background: rgba(248, 113, 113, 0.1); }
+        .del-btn:hover { background: rgba(248, 113, 113, 0.2); }
+
+        .action-bar { display: flex; gap: 15px; margin-top: 25px; }
+        .main-btn { padding: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; flex: 1; font-size: 16px; transition: 0.3s; }
         .btn-exec { background: var(--primary); color: white; }
-        .btn-exec:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn-exec:hover { background: #4f46e5; }
+        .btn-exec:disabled { opacity: 0.2; cursor: not-allowed; }
         .btn-clear { background: transparent; border: 1px solid #444; color: #ccc; }
 
-        .op-btn { cursor: pointer; border: none; background: none; font-size: 12px; font-weight: bold; margin: 0 5px; }
-        .modify-btn { color: var(--success); }
-        .del-btn { color: #f87171; }
-
-        #log { margin-top: 15px; text-align: center; color: #666; font-size: 14px; }
-        .status-done { color: #888; font-style: italic; }
+        #log { margin-top: 20px; text-align: center; color: #666; font-size: 14px; min-height: 24px; }
+        .status-done { color: #555; font-style: italic; text-decoration: line-through; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('renameTab', this)">素材重命名</button>
-        <button class="tab-btn" onclick="switchTab('mergeTab', this)">剧本TXT合并</button>
+    <h2>AI 漫剧素材命名工具 <small style="font-size: 12px; vertical-align: middle; opacity: 0.5;">v2026.2 全能版</small></h2>
+    
+    <div class="input-group">
+        <label>统一剧名前缀（自动保存）</label>
+        <input type="text" id="globalTitle" placeholder="输入新剧名，如：被恶毒邻居害死后" oninput="saveAndRefresh()">
     </div>
 
-    <div id="renameTab" class="tab-content active">
-        <h2>视频素材命名</h2>
-        <div class="input-group">
-            <label>新文件名（前缀）</label>
-            <input type="text" id="globalTitle" placeholder="输入剧名，如：重生之我是导演" oninput="refreshAllNames()">
-        </div>
-        <div class="drop-area" onclick="selectFolder()">
-            <p>点击选择包含视频的文件夹</p>
-        </div>
-        <div class="file-list-container">
-            <table>
-                <thead>
-                    <tr><th width="30%">原文件名</th><th width="50%">预览</th><th width="20%" style="text-align:center">操作</th></tr>
-                </thead>
-                <tbody id="fileList"></tbody>
-            </table>
-        </div>
-        <div class="action-bar">
-            <button class="main-btn btn-clear" onclick="clearAll()">清空列表</button>
-            <button class="main-btn btn-exec" id="execBtn" onclick="runBatchRename()" disabled>确认修改文件名</button>
-        </div>
+    <div id="dropZone" class="drop-area" onclick="selectFolder()">
+        <p>📂 拖拽文件夹或视频到这里</p>
+        <p style="font-size: 11px; margin-top: 8px; color: #555;">支持格式：剧名-第X集 描述 时间戳.mp4 / 剧名01.mp4 / 第五集.mp4</p>
     </div>
 
-    <div id="mergeTab" class="tab-content">
-        <h2>剧本章节合并</h2>
-        <p style="color:#888; font-size: 14px; margin-bottom: 20px;">合并文件夹内的所有 .txt 或 .md，按集数顺序排列。</p>
-        <div class="drop-area" onclick="document.getElementById('txtFolderInput').click()">
-            <strong id="txtStatusText" style="color:var(--primary)">点击选择剧本文件夹</strong>
-            <input type="file" id="txtFolderInput" webkitdirectory directory multiple style="display:none" onchange="handleTxtFiles(this.files)">
-        </div>
-        <div id="txtPreview" style="margin-top: 10px; color: var(--success); text-align: center; font-size: 14px;"></div>
-        <div class="action-bar">
-            <button class="main-btn btn-exec" id="mergeBtn" onclick="executeMerge()" disabled>合并并保存为 TXT</button>
-        </div>
+    <div class="file-list-container">
+        <table>
+            <thead>
+                <tr>
+                    <th width="35%">原始文件名</th>
+                    <th width="45%">预览（可手动编辑）</th>
+                    <th width="20%" style="text-align: center;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="fileList"></tbody>
+        </table>
     </div>
 
+    <div class="action-bar">
+        <button class="main-btn btn-clear" onclick="clearAll()">清空列表</button>
+        <button class="main-btn btn-exec" id="execBtn" onclick="runBatchRename()" disabled>确认批量修改</button>
+    </div>
+    
     <div id="log">准备就绪</div>
 </div>
 
 <script>
-    // --- 公用逻辑 ---
-    function switchTab(tabId, btn) {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        btn.classList.add('active');
-        document.getElementById('log').innerText = "已切换功能";
+    let filesData = [];
+
+    // 页面加载时恢复上次的剧名
+    window.onload = () => {
+        const savedTitle = localStorage.getItem('lastSeriesTitle');
+        if (savedTitle) {
+            document.getElementById('globalTitle').value = savedTitle;
+        }
+    };
+
+    // 保存剧名并即时刷新预览
+    function saveAndRefresh() {
+        const title = document.getElementById('globalTitle').value;
+        localStorage.setItem('lastSeriesTitle', title);
+        refreshAllNames();
     }
 
-    // --- 命名工具逻辑 ---
-    let filesData = [];
+    // --- 核心逻辑：智能解析各种乱七八糟的格式 ---
     function getSmartName(oldName) {
-        const prefix = document.getElementById('globalTitle').value.trim();
-        let num = "1";
-        const epMatch = oldName.match(/第(\d+)[集话]/);
-        if (epMatch) num = epMatch[1].replace(/^0+/, ''); 
-        else {
-            const normalMatch = oldName.match(/(\d+)/);
-            num = normalMatch ? normalMatch[1].replace(/^0+/, '') : "1";
+        const prefixInput = document.getElementById('globalTitle').value.trim();
+        
+        // 1. 优先匹配：导演专业格式 (剧名-第X集 描述 时间戳)
+        const heavyRegex = /^(.*?)-第([\d一二三四五六七八九十]+)集\s+(.*?)(?=\s*\d{8}_\d{6}|_final_video|\.mp4)/;
+        const heavyMatch = oldName.match(heavyRegex);
+
+        if (heavyMatch) {
+            const seriesName = heavyMatch[1]; 
+            const epNum = heavyMatch[2];      
+            const desc = heavyMatch[3].trim(); 
+            return `${prefixInput || seriesName} 第${epNum}集 ${desc}.mp4`;
         }
-        return `${prefix} 第${num}集.mp4`;
+
+        // 2. 兼容匹配：普通格式 (寻找“第X集”或“第X话”)
+        const epMatch = oldName.match(/第([\d一二三四五六七八九十]+)[集话]/);
+        if (epMatch) {
+            const num = epMatch[1];
+            // 尝试提取“第”字前面的内容作为原剧名
+            const namePart = oldName.split(/第[\d一二三四五六七八九十]+[集话]/)[0].replace(/[-_]$/, '').trim();
+            return `${prefixInput || namePart || '素材'} 第${num}集.mp4`;
+        }
+
+        // 3. 最简匹配：只找数字
+        const pureNumMatch = oldName.match(/(\d+)/);
+        if (pureNumMatch) {
+            const num = pureNumMatch[1].replace(/^0+/, '') || "0";
+            return `${prefixInput || '素材'} 第${num}集.mp4`;
+        }
+
+        return `${prefixInput || '未知素材'}_${oldName}`;
     }
 
     async function addToFileList(handle) {
-        if (handle.kind !== 'file' || !/\.(mp4|mov|mkv|webm)$/i.test(handle.name)) return;
-        filesData.push({ handle, oldName: handle.name, newName: getSmartName(handle.name), isDone: false });
+        if (handle.kind !== 'file' || !/\.(mp4|mov|mkv|webm|avi)$/i.test(handle.name)) return;
+        if (filesData.some(f => f.oldName === handle.name)) return;
+
+        filesData.push({
+            handle: handle,
+            oldName: handle.name,
+            newName: getSmartName(handle.name),
+            isDone: false
+        });
     }
 
     function renderUI() {
         const tbody = document.getElementById('fileList');
-        tbody.innerHTML = filesData.map((item, index) => `
-            <tr>
-                <td style="color: #666;">${item.oldName}</td>
-                <td><input type="text" class="edit-input" value="${item.newName}" oninput="filesData[${index}].newName=this.value"></td>
-                <td style="text-align: center;">
-                    <button class="op-btn modify-btn" onclick="renameSingle(${index})">修改</button>
-                    <button class="op-btn del-btn" onclick="removeFile(${index})">移除</button>
-                </td>
-            </tr>
-        `).join('');
-        document.getElementById('execBtn').disabled = !filesData.length;
+        tbody.innerHTML = filesData.map((item, index) => {
+            if (item.isDone) {
+                return `<tr><td colspan="2" class="status-done">✅ 已完成：${item.newName}</td><td style="text-align:center"><button class="op-btn del-btn" onclick="removeFile(${index})">移除记录</button></td></tr>`;
+            }
+            return `
+                <tr>
+                    <td style="color: #666; font-size: 11px; word-break: break-all;">${item.oldName}</td>
+                    <td><input type="text" class="edit-input" value="${item.newName}" oninput="updateManualName(${index}, this.value)"></td>
+                    <td style="text-align: center;">
+                        <button class="op-btn modify-btn" onclick="renameSingle(${index})">修改</button>
+                        <button class="op-btn del-btn" onclick="removeFile(${index})">移除</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        document.getElementById('execBtn').disabled = !filesData.some(f => !f.isDone);
+        document.getElementById('log').innerText = `已加载 ${filesData.length} 个文件`;
     }
+
+    async function renameSingle(index) {
+        const item = filesData[index];
+        try {
+            if (await item.handle.queryPermission({mode: 'readwrite'}) !== 'granted') {
+                await item.handle.requestPermission({mode: 'readwrite'});
+            }
+            await item.handle.move(item.newName);
+            item.isDone = true;
+            renderUI();
+        } catch (err) {
+            alert("无法修改，请确保文件未被播放器占用且已授权。");
+        }
+    }
+
+    async function runBatchRename() {
+        const btn = document.getElementById('execBtn');
+        btn.innerText = "正在处理...";
+        btn.disabled = true;
+
+        for (let item of filesData) {
+            if (item.isDone) continue;
+            try {
+                if (await item.handle.queryPermission({mode: 'readwrite'}) !== 'granted') {
+                    await item.handle.requestPermission({mode: 'readwrite'});
+                }
+                await item.handle.move(item.newName);
+                item.isDone = true;
+            } catch (e) {}
+        }
+        renderUI();
+        btn.innerText = "确认批量修改";
+        alert("批量重命名完成！");
+    }
+
+    function updateManualName(index, val) { filesData[index].newName = val; }
+    function removeFile(index) { filesData.splice(index, 1); renderUI(); }
+    function clearAll() { filesData = []; renderUI(); }
+    function refreshAllNames() {
+        filesData.forEach(item => { if(!item.isDone) item.newName = getSmartName(item.oldName); });
+        renderUI();
+    }
+
+    const dropZone = document.getElementById('dropZone');
+    dropZone.ondragover = e => e.preventDefault();
+    dropZone.ondrop = async e => {
+        e.preventDefault();
+        const items = [...e.dataTransfer.items];
+        for (const item of items) {
+            const h = await item.getAsFileSystemHandle();
+            if (h.kind === 'directory') { for await (const entry of h.values()) await addToFileList(entry); }
+            else await addToFileList(h);
+        }
+        renderUI();
+    };
 
     async function selectFolder() {
         try {
@@ -142,54 +226,6 @@
             for await (const e of d.values()) await addToFileList(e);
             renderUI();
         } catch(e) {}
-    }
-
-    async function runBatchRename() {
-        for (let item of filesData) {
-            try {
-                if (await item.handle.queryPermission({mode: 'readwrite'}) !== 'granted') await item.handle.requestPermission({mode: 'readwrite'});
-                await item.handle.move(item.newName);
-                item.isDone = true;
-            } catch (e) {}
-        }
-        alert("批量修改完成");
-        clearAll();
-    }
-    
-    function refreshAllNames() { filesData.forEach(f => f.newName = getSmartName(f.oldName)); renderUI(); }
-    function clearAll() { filesData = []; renderUI(); }
-    function removeFile(i) { filesData.splice(i, 1); renderUI(); }
-
-    // --- 剧本合并逻辑 ---
-    let txtFiles = [];
-    let劇名 = "合并剧本";
-
-    function handleTxtFiles(files) {
-        txtFiles = Array.from(files).filter(f => (f.name.endsWith('.txt') || f.name.endsWith('.md')) && !f.name.startsWith('.'));
-        if (txtFiles.length > 0) {
-            txtFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
-            let first = txtFiles[0].name;
-            劇名 = first.replace(/\.(txt|md)$/i, '').replace(/第\s*\d+\s*[集|话|章|回]/, '').replace(/^[_\-\s]+|[_\-\s]+$/g, '');
-            if(!劇名) 劇名 = "未命名剧本";
-            document.getElementById('txtPreview').innerHTML = `✅ 已识别剧名：<strong>《${劇名}》</strong>，共 ${txtFiles.length} 章`;
-            document.getElementById('mergeBtn').disabled = false;
-        }
-    }
-
-    async function executeMerge() {
-        let fullText = "";
-        for (const file of txtFiles) {
-            const text = await file.text();
-            fullText += `\r\n\r\n===== ${file.name.replace(/\.(txt|md)$/i, '')} =====\r\n\r\n${text}\r\n\r\n`;
-        }
-        const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${劇名}_全集合并.txt`;
-        a.click();
-        URL.revokeObjectURL(url);
-        document.getElementById('log').innerText = "剧本合并成功！";
     }
 </script>
 
