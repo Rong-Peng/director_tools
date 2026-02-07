@@ -2,191 +2,220 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>AI漫剧素材命名工具 - 导演纠错增强版</title>
+    <title>AI漫剧导演全能助手 - 整合增强版</title>
     <style>
         :root { --primary: #6366f1; --success: #4ade80; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #333; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 20px; background: var(--bg); color: var(--text); line-height: 1.6; }
-        .container { max-width: 1000px; margin: auto; background: var(--card); padding: 30px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 20px; background: var(--bg); color: var(--text); line-height: 1.6; margin: 0; }
+        .container { max-width: 1000px; margin: 20px auto; background: var(--card); padding: 30px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
+        /* 导航 Tab */
+        .tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .tab-btn { background: none; border: none; color: #888; padding: 10px 20px; cursor: pointer; font-weight: bold; font-size: 16px; border-radius: 8px; transition: 0.3s; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
         h2 { margin-top: 0; color: #a5b4fc; text-align: center; letter-spacing: 1px; }
         .input-group { margin-bottom: 25px; background: #252525; padding: 15px; border-radius: 10px; border: 1px solid #333; }
         label { display: block; margin-bottom: 8px; font-size: 13px; color: #aaa; text-transform: uppercase; font-weight: bold; }
-        input#globalTitle { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 14px; width: 100%; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.3s; }
-        input#globalTitle:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+        input[type="text"] { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 14px; width: 100%; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.3s; }
+        input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
 
         .drop-area { border: 2px dashed #444; padding: 40px; text-align: center; border-radius: 12px; background: #1a1a1a; cursor: pointer; margin-bottom: 25px; transition: 0.3s; }
         .drop-area:hover { border-color: var(--primary); background: #222; }
         .drop-area p { margin: 0; color: #888; }
 
-        .file-list-container { background: #141414; border-radius: 10px; border: 1px solid var(--border); max-height: 500px; overflow-y: auto; }
+        .file-list-container { background: #141414; border-radius: 10px; border: 1px solid var(--border); max-height: 450px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { background: #252525; padding: 15px 12px; text-align: left; color: #888; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--border); }
         td { padding: 12px; border-bottom: 1px solid #222; vertical-align: middle; }
         
         .edit-input { background: #000; border: 1px solid #444; color: var(--success); padding: 8px 12px; width: 95%; border-radius: 6px; outline: none; font-family: monospace; }
-        .edit-input:focus { border-color: var(--success); }
         
-        .op-btn { cursor: pointer; border: none; background: none; font-size: 12px; font-weight: bold; margin: 0 5px; transition: 0.2s; padding: 5px 8px; border-radius: 4px; }
-        .modify-btn { color: var(--success); background: rgba(74, 222, 128, 0.1); }
-        .modify-btn:hover { background: rgba(74, 222, 128, 0.2); }
-        .del-btn { color: #f87171; background: rgba(248, 113, 113, 0.1); }
-        .del-btn:hover { background: rgba(248, 113, 113, 0.2); }
-
         .action-bar { display: flex; gap: 15px; margin-top: 25px; }
         .main-btn { padding: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; flex: 1; font-size: 16px; transition: 0.3s; }
         .btn-exec { background: var(--primary); color: white; }
-        .btn-exec:hover { background: #4f46e5; }
         .btn-exec:disabled { opacity: 0.2; cursor: not-allowed; }
         .btn-clear { background: transparent; border: 1px solid #444; color: #ccc; }
 
+        .op-btn { cursor: pointer; border: none; background: none; font-size: 12px; font-weight: bold; margin: 0 5px; transition: 0.2s; padding: 5px 8px; border-radius: 4px; }
+        .modify-btn { color: var(--success); background: rgba(74, 222, 128, 0.1); }
+        .del-btn { color: #f87171; background: rgba(248, 113, 113, 0.1); }
+
         #log { margin-top: 20px; text-align: center; color: #666; font-size: 14px; min-height: 24px; }
         .status-done { color: #555; font-style: italic; text-decoration: line-through; }
+        footer { text-align: center; margin-top: 30px; font-size: 11px; color: #444; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>AI 漫剧素材命名工具 <small style="font-size: 12px; vertical-align: middle; opacity: 0.5;">v2026.3 修正版</small></h2>
-    
-    <div class="input-group">
-        <label>统一剧名前缀（自动保存上次输入）</label>
-        <input type="text" id="globalTitle" placeholder="输入新剧名，如：被恶毒邻居害死后" oninput="saveAndRefresh()">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('renameTab', this)">🎬 素材重命名</button>
+        <button class="tab-btn" onclick="switchTab('mergeTab', this)">📄 剧本 TXT 合并</button>
     </div>
 
-    <div id="dropZone" class="drop-area" onclick="selectFolder()">
-        <p>📂 拖拽文件夹或视频到这里</p>
-        <p style="font-size: 11px; margin-top: 8px; color: #eab308;">【已修正】自动识别并剔除 2026XXXX 等日期时间戳</p>
+    <div id="renameTab" class="tab-content active">
+        <h2>视频重命名 <small style="font-size: 12px; opacity: 0.5;">已适配日期剔除</small></h2>
+        <div class="input-group">
+            <label>统一剧名前缀（自动保存）</label>
+            <input type="text" id="globalTitle" placeholder="输入新剧名..." oninput="saveAndRefresh()">
+        </div>
+        <div id="dropZone" class="drop-area" onclick="selectRenameFolder()">
+            <p>📂 拖拽文件夹或视频到这里，或点击选择</p>
+            <p style="font-size: 11px; margin-top: 8px; color: #eab308;">自动识别并剔除 2026XXXX 等日期时间戳</p>
+        </div>
+        <div class="file-list-container">
+            <table>
+                <thead>
+                    <tr><th width="35%">原文件名</th><th width="45%">预览</th><th width="20%" style="text-align:center">操作</th></tr>
+                </thead>
+                <tbody id="fileList"></tbody>
+            </table>
+        </div>
+        <div class="action-bar">
+            <button class="main-btn btn-clear" onclick="clearRenameList()">清空列表</button>
+            <button class="main-btn btn-exec" id="execBtn" onclick="runBatchRename()" disabled>确认批量修改</button>
+        </div>
     </div>
 
-    <div class="file-list-container">
-        <table>
-            <thead>
-                <tr>
-                    <th width="35%">原始文件名</th>
-                    <th width="45%">预览（已自动过滤时间戳）</th>
-                    <th width="20%" style="text-align: center;">操作</th>
-                </tr>
-            </thead>
-            <tbody id="fileList"></tbody>
-        </table>
+    <div id="mergeTab" class="tab-content">
+        <h2>剧本章节合并</h2>
+        <div class="drop-area" onclick="selectMergeFolder()">
+            <p id="txtStatusText" style="color: var(--primary); font-weight: bold; font-size: 18px;">📄 点击选择剧本文件夹</p>
+            <p style="font-size: 11px; margin-top: 8px; color: #888;">支持 .txt 和 .md 格式，自动按集数自然排序</p>
+        </div>
+        <div id="txtPreview" style="margin: 20px 0; text-align: center; color: var(--success); font-size: 14px;"></div>
+        <div class="action-bar">
+            <button class="main-btn btn-exec" id="mergeBtn" onclick="executeMerge()" disabled>合并并保存为完整 TXT</button>
+        </div>
     </div>
 
-    <div class="action-bar">
-        <button class="main-btn btn-clear" onclick="clearAll()">清空列表</button>
-        <button class="main-btn btn-exec" id="execBtn" onclick="runBatchRename()" disabled>确认批量修改</button>
-    </div>
-    
-    <div id="log">准备就绪</div>
+    <div id="log">系统就绪</div>
 </div>
 
-<script>
-    let filesData = [];
+<footer>DIRECTOR TOOLKIT &copy; 2026 v2.0</footer>
 
+<script>
+    // --- 公用切换逻辑 ---
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+        document.getElementById('log').innerText = "就绪";
+    }
+
+    // --- 视频重命名核心逻辑 ---
+    let renameFiles = [];
     window.onload = () => {
-        const savedTitle = localStorage.getItem('lastSeriesTitle');
-        if (savedTitle) document.getElementById('globalTitle').value = savedTitle;
+        const saved = localStorage.getItem('lastSeriesTitle');
+        if (saved) document.getElementById('globalTitle').value = saved;
     };
 
     function saveAndRefresh() {
-        const title = document.getElementById('globalTitle').value;
-        localStorage.setItem('lastSeriesTitle', title);
-        refreshAllNames();
+        localStorage.setItem('lastSeriesTitle', document.getElementById('globalTitle').value);
+        refreshRenameUI();
     }
 
-    // --- 核心修正逻辑：彻底解决时间戳干扰 ---
-    function getSmartName(oldName) {
-        const prefixInput = document.getElementById('globalTitle').value.trim();
+    function getSmartRename(oldName) {
+        const prefix = document.getElementById('globalTitle').value.trim();
+        let clean = oldName.replace(/\d{8}(_\d{6})?/, '').replace(/_final_video/gi, '').replace(/\.(mp4|mov|mkv|webm)$/gi, '').trim();
         
-        // 1. 第一步：先把文件名里的时间戳和干扰项通通切掉
-        // 剔除：8位以上连续数字 (如20260206)、带下划线的长数字、以及 final_video 等字样
-        let cleanName = oldName
-            .replace(/\d{8}(_\d{6})?/, '')     // 剔除 20260206 或 20260206_082149
-            .replace(/_final_video/gi, '')     // 剔除 final_video
-            .replace(/\.mp4|\.mov|\.mkv/gi, '') // 暂时去掉后缀方便匹配
-            .trim();
-
-        // 2. 模式 A：匹配“剧名-第X集 描述”
         const regexA = /^(.*?)-第([\d一二三四五六七八九十]+)集\s+(.*)/;
-        const matchA = cleanName.match(regexA);
-        if (matchA) {
-            return `${prefixInput || matchA[1]} 第${matchA[2]}集 ${matchA[3].trim()}.mp4`;
-        }
+        const matchA = clean.match(regexA);
+        if (matchA) return `${prefix || matchA[1]} 第${matchA[2]}集 ${matchA[3].trim()}.mp4`;
 
-        // 3. 模式 B：寻找集数 (限制在1-4位，防止误杀其他长数字)
         const regexB = /第([\d一二三四五六七八九十]{1,4})[集话]/;
-        const matchB = cleanName.match(regexB);
-        if (matchB) {
-            const num = matchB[1];
-            const namePart = cleanName.split(regexB)[0].replace(/[-_]$/, '').trim();
-            return `${prefixInput || namePart || '素材'} 第${num}集.mp4`;
-        }
+        const matchB = clean.match(regexB);
+        if (matchB) return `${prefix || clean.split(regexB)[0].replace(/[-_]$/, '').trim() || '素材'} 第${matchB[1]}集.mp4`;
 
-        // 4. 模式 C：寻找剩下的纯数字
-        const matchC = cleanName.match(/(\d{1,4})/);
-        if (matchC) {
-            const num = matchC[1].replace(/^0+/, '') || "0";
-            return `${prefixInput || '素材'} 第${num}集.mp4`;
-        }
+        const matchC = clean.match(/(\d{1,4})/);
+        if (matchC) return `${prefix || '素材'} 第${matchC[1].replace(/^0+/, '') || "0"}集.mp4`;
 
-        return `${prefixInput || '素材'}_${cleanName}.mp4`;
+        return `${prefix || '素材'}_${clean}.mp4`;
     }
 
-    async function addToFileList(handle) {
-        if (handle.kind !== 'file' || !/\.(mp4|mov|mkv|webm|avi)$/i.test(handle.name)) return;
-        if (filesData.some(f => f.oldName === handle.name)) return;
-        filesData.push({
-            handle: handle,
-            oldName: handle.name,
-            newName: getSmartName(handle.name),
-            isDone: false
-        });
-    }
-
-    function renderUI() {
-        const tbody = document.getElementById('fileList');
-        tbody.innerHTML = filesData.map((item, index) => {
-            if (item.isDone) return `<tr><td colspan="2" class="status-done">✅ 已完成：${item.newName}</td><td style="text-align:center"><button class="op-btn del-btn" onclick="removeFile(${index})">移除记录</button></td></tr>`;
-            return `<tr><td style="color: #666; font-size: 11px;">${item.oldName}</td><td><input type="text" class="edit-input" value="${item.newName}" oninput="updateManualName(${index}, this.value)"></td><td style="text-align: center;"><button class="op-btn modify-btn" onclick="renameSingle(${index})">修改</button><button class="op-btn del-btn" onclick="removeFile(${index})">移除</button></td></tr>`;
-        }).join('');
-        document.getElementById('execBtn').disabled = !filesData.some(f => !f.isDone);
-        document.getElementById('log').innerText = `加载成功，准备处理 ${filesData.length} 个文件`;
-    }
-
-    async function renameSingle(index) {
-        const item = filesData[index];
+    async function selectRenameFolder() {
         try {
-            if (await item.handle.queryPermission({mode: 'readwrite'}) !== 'granted') await item.handle.requestPermission({mode: 'readwrite'});
-            await item.handle.move(item.newName);
-            item.isDone = true;
-            renderUI();
-        } catch (err) { alert("修改失败，请检查文件是否被占用。"); }
+            const d = await window.showDirectoryPicker();
+            renameFiles = [];
+            for await (const e of d.values()) {
+                if (e.kind === 'file' && /\.(mp4|mov|mkv|webm)$/i.test(e.name)) {
+                    renameFiles.push({ handle: e, oldName: e.name, newName: getSmartRename(e.name), isDone: false });
+                }
+            }
+            refreshRenameUI();
+        } catch(e) {}
+    }
+
+    function refreshRenameUI() {
+        const tbody = document.getElementById('fileList');
+        renameFiles.forEach(f => { if(!f.isDone) f.newName = getSmartRename(f.oldName); });
+        tbody.innerHTML = renameFiles.map((item, index) => `
+            <tr>
+                <td style="color:#666; font-size:11px;">${item.oldName}</td>
+                <td><input type="text" class="edit-input" value="${item.newName}" oninput="renameFiles[${index}].newName=this.value"></td>
+                <td style="text-align:center">
+                    <button class="op-btn del-btn" onclick="renameFiles.splice(${index},1);refreshRenameUI()">移除</button>
+                </td>
+            </tr>
+        `).join('');
+        document.getElementById('execBtn').disabled = !renameFiles.length;
     }
 
     async function runBatchRename() {
-        const btn = document.getElementById('execBtn');
-        btn.innerText = "处理中...";
-        btn.disabled = true;
-        for (let item of filesData) {
-            if (item.isDone) continue;
+        for (let item of renameFiles) {
             try {
                 if (await item.handle.queryPermission({mode: 'readwrite'}) !== 'granted') await item.handle.requestPermission({mode: 'readwrite'});
                 await item.handle.move(item.newName);
-                item.isDone = true;
             } catch (e) {}
         }
-        renderUI();
-        btn.innerText = "确认批量修改";
-        alert("全部重命名完成！");
+        alert("批量重命名完成！");
+        renameFiles = []; refreshRenameUI();
+    }
+    function clearRenameList() { renameFiles = []; refreshRenameUI(); }
+
+    // --- 剧本合并逻辑 ---
+    let mergeHandles = [];
+    let scriptTitle = "合并剧本";
+
+    async function selectMergeFolder() {
+        try {
+            const d = await window.showDirectoryPicker();
+            mergeHandles = [];
+            for await (const e of d.values()) {
+                if (e.kind === 'file' && /\.(txt|md)$/i.test(e.name)) mergeHandles.push(e);
+            }
+            if (mergeHandles.length > 0) {
+                mergeHandles.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
+                let first = mergeHandles[0].name;
+                scriptTitle = first.replace(/\.(txt|md)$/i, '').replace(/第\s*\d+\s*[集|话|章|回]/, '').replace(/^[_\-\s]+|[_\-\s]+$/g, '');
+                document.getElementById('txtPreview').innerHTML = `✅ 识别剧名：<strong>《${scriptTitle || '未命名'}》</strong>，共 ${mergeHandles.length} 章`;
+                document.getElementById('mergeBtn').disabled = false;
+            }
+        } catch(e) {}
     }
 
-    function updateManualName(index, val) { filesData[index].newName = val; }
-    function removeFile(index) { filesData.splice(index, 1); renderUI(); }
-    function clearAll() { filesData = []; renderUI(); }
-    function refreshAllNames() {
-        filesData.forEach(item => { if(!item.isDone) item.newName = getSmartName(item.oldName); });
-        renderUI();
+    async function executeMerge() {
+        let fullText = "";
+        for (const handle of mergeHandles) {
+            const file = await handle.getFile();
+            const text = await file.text();
+            fullText += `\r\n\r\n===== ${handle.name.replace(/\.(txt|md)$/i, '')} =====\r\n\r\n${text}\r\n\r\n`;
+        }
+        const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${scriptTitle || '全集合并'}_全集合并.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById('log').innerText = "剧本导出成功！";
     }
 
+    // --- 拖拽支持 (视频重命名) ---
     const dropZone = document.getElementById('dropZone');
     dropZone.ondragover = e => e.preventDefault();
     dropZone.ondrop = async e => {
@@ -194,20 +223,11 @@
         const items = [...e.dataTransfer.items];
         for (const item of items) {
             const h = await item.getAsFileSystemHandle();
-            if (h.kind === 'directory') { for await (const entry of h.values()) await addToFileList(entry); }
-            else await addToFileList(h);
+            if (h.kind === 'directory') { for await (const entry of h.values()) if(/\.(mp4|mov|mkv|webm)$/i.test(entry.name)) renameFiles.push({ handle: entry, oldName: entry.name, newName: getSmartRename(entry.name), isDone: false }); }
+            else if(/\.(mp4|mov|mkv|webm)$/i.test(h.name)) renameFiles.push({ handle: h, oldName: h.name, newName: getSmartRename(h.name), isDone: false });
         }
-        renderUI();
+        refreshRenameUI();
     };
-
-    async function selectFolder() {
-        try {
-            const d = await window.showDirectoryPicker();
-            for await (const e of d.values()) await addToFileList(e);
-            renderUI();
-        } catch(e) {}
-    }
 </script>
-
 </body>
 </html>
